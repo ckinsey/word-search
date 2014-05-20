@@ -33,16 +33,16 @@
   var CIRCLE_FILL = 1;
 
   // Interjections to randomly add to the user feedback
-  var FEEDBACK_UIFAIL = 'Dream on!,Do a barrell roll!,Try again.,Keep practicing.,Y U NO WORK?,Keep trying.,Try this:'.split(',');
-  var FEEDBACK_REPEAT = 'Not today!,Jumping Jellybeans!,Sheesh,Are you kidding me?,Seriously?,Oy Vey.,Nice effort but'.split(',');
-  var FEEDBACK_FAIL = 'By George!,For the love of Pete!,Humbug!,Fail!,Oh Snap!,Fiddlesticks!,U mad bro,NO.,Not today!,Jumping Jellybeans!,Sheesh,Are you kidding me?,Seriously?,Oy Vey.,Nice effort but'.split(',');
-  var FEEDBACK_FOUND1 = 'Cool,Fantastic,Good Work,Nice,Sweet,Good,Great,Excellent'.split(',');
-  var FEEDBACK_FINISHED = 'Darn Tootin,Woot,Awesome,Spectacular,Brilliant,Aww Yea,Mission Accomplished'.split(',');
+  var FEEDBACK_UIFAIL = 'Try again!';
+  var FEEDBACK_REPEAT = 'Try again!';
+  var FEEDBACK_FAIL = 'Whoops!';
+  var FEEDBACK_FOUND1 = 'Correct!';
+  var FEEDBACK_FINISHED = 'Great Job!'
 
   // Feedback for specific senarios
-  var FEEDBACK_NO_MOVE = ' Press. Drag. Release.';
+  var FEEDBACK_NO_MOVE = ' Click, drag, and release.';
   var FEEDBACK_DIAGONAL = ' Diagonal lines must be 45&deg;.';
-  var FEEDBACK_PUZZLE_FINISHED = '! You found everything.';
+  var FEEDBACK_PUZZLE_FINISHED = ' You found everything.';
   var FEEDBACK_WORD_FOUND = ' You found: ';
   var FEEDBACK_AGAIN = ' ... Again.';
   var FEEDBACK_NOT_ON_LIST = ' is not on the word list.';
@@ -897,7 +897,7 @@
     // if we haven't moved
     if(dx === 0 && dy === 0) {
       if(uiFeedback.isUserConfused(1)) {
-        uiFeedback.notify(RANDOM.from(FEEDBACK_UIFAIL) + FEEDBACK_NO_MOVE);
+        uiFeedback.notify(FEEDBACK_UIFAIL + FEEDBACK_NO_MOVE);
       }
       return 0;
     }
@@ -907,7 +907,7 @@
       // ensure the slope is 45*
       if(Math.abs(dx) !== Math.abs(dy)) {
         if(uiFeedback.isUserConfused(1)) {
-          uiFeedback.notify(RANDOM.from(FEEDBACK_UIFAIL) + FEEDBACK_DIAGONAL);
+          uiFeedback.notify(FEEDBACK_UIFAIL + FEEDBACK_DIAGONAL);
         }
         return 0;
       }
@@ -948,7 +948,7 @@
         dir: dir
       });
       if(wspIsAllFound(puzzle)) {
-        uiFeedback.notify(RANDOM.from(FEEDBACK_FINISHED) + FEEDBACK_PUZZLE_FINISHED);
+        uiFeedback.notify(FEEDBACK_FINISHED + FEEDBACK_PUZZLE_FINISHED);
         setTimeout(function () {
           uiFeedback.askForNewPuzzle();
         }, 400 + NOTIFICATION_DURATION + 400);
@@ -963,11 +963,11 @@
       } else {
         if(wasFound) {
           if(uiFeedback.isUserConfused(1)) {
-            uiFeedback.notify(RANDOM.from(FEEDBACK_REPEAT) + ' ' + FEEDBACK_WORD_FOUND + '"' + word + '"' + FEEDBACK_AGAIN);
+            uiFeedback.notify(FEEDBACK_REPEAT + ' ' + FEEDBACK_WORD_FOUND + '"' + word + '"' + FEEDBACK_AGAIN);
           }
         } else {
           if(uiFeedback.isUserConfused(-1)) {
-            uiFeedback.notify(RANDOM.from(FEEDBACK_FOUND1) + FEEDBACK_WORD_FOUND + word);
+            uiFeedback.notify(FEEDBACK_FOUND1 + FEEDBACK_WORD_FOUND + word);
           }
           // Keep track of how many words the user has found
           TOTAL_NUMBER_OF_WORDS_FOUND += 1;
@@ -976,7 +976,7 @@
       }
     } else {
       if(uiFeedback.isUserConfused(1)) {
-        uiFeedback.notify(RANDOM.from(FEEDBACK_FAIL) + ' "' + word + '"' + FEEDBACK_NOT_ON_LIST);
+        uiFeedback.notify(FEEDBACK_FAIL + ' "' + word + '"' + FEEDBACK_NOT_ON_LIST);
       }
     }
 
