@@ -1,6 +1,31 @@
 // ----------------------------------------------- [ Module: Game ] -
 (function () {
 
+  // DEFAULT OPTIONS
+  // WORDS: a comma seperated list of words
+  // WIDTH: the width of the puzzle in number of characters
+  // HEIGHT: the height of the puzzle in number of characters
+  // MAX: the maximum number of words to show
+  // SEED: an integer that will seed the random number generation
+  // MODE: the method that the game should be run in
+  //      game - does not show answers when a word from the list is clicked
+  //      help - shows the answer when a word from the list is clicked
+  // DIRS: a comma speerated list of allowed word directions
+  //   By default all directions are allowed, for 'regular' left to right
+  //   reading just enable 'E' east, 'W' west is 'backwards',
+  //   ALL, N, S, E, W, NE, NW, SE, SW
+  // LIST: a special word list to load
+
+  var WORD_LIST = null;
+  var WORD_INDEX = 0;
+  var WIDTH = 8;
+  var HEIGHT = 8;
+  var MAX = WIDTH * HEIGHT;
+  var SEED = RANDOM.getSeed();
+  var MODE = 'question';
+  var DIRECTIONS = 128 | 1 | 2 | 4 | 8 | 16 | 32 | 64;
+  var ORDER = 'random';
+
   // Persistant Data 
   var TOTAL_NUMBER_OF_WORDS_FOUND = DATA.loadValid('total-words-found', 0, DATA.int10);
   var TOTAL_NUMBER_OF_PUZZLES = DATA.loadValid('total-puzzles-solved', 0, DATA.int10);
@@ -1031,11 +1056,92 @@
   function uiIPhoneBugFix(ev) {
     ev.preventDefault();
   }
+    
+  function parseOptions(options) {
+      /*
+      Accepts a JSON object describing overrides for any of the default options,
+      listed at the top of crossword.js
+      */
+      
+      if(options.index){
+        WORD_INDEX = Math.abs(parseInt(options.index, 10));
+      }
+      if(options.width) {
+        WIDTH = parseInt(options.width, 10);
+        if(WIDTH < 5) {
+          WIDTH = 5;
+        }
+        N_LETTERS_X = WIDTH;
+      }
+      if(options.height) {
+        HEIGHT = parseInt(options.height, 10);
+        if(HEIGHT < 5) {
+          HEIGHT = 5;
+        }
+        N_LETTERS_Y = HEIGHT;
+      }
+      if(options.max) {
+        MAX = parseInt(options.max, 10);
+      } else {
+        MAX = WIDTH * HEIGHT;
+      }
+      if(options.seed) {
+        SEED = parseInt(options.seed, 10);
+        RANDOM.setSeed(SEED);
+      }
+      if (options.order) {
+        ORDER = options.order;
+      }
+      if(options.mode) {
+        var mode = options.mode.toLowerCase();
+        if(mode === 'questions' || mode === 'question' || mode === 'game' || mode === 'search' || mode === 'find' || mode === 'puzzle') {
+          MODE = 'find';
+        }
+        if(mode === 'answer' || mode === 'answers' || mode === 'solution' || mode === 'solutions' || mode === 'found' || mode === 'done' || mode === 'help' || mode === 'hint') {
+          MODE = 'help';
+        }
+      }
+      if(options.dirs) {
+        var caps = options.dirs.toUpperCase();
+        var dirNum = 0;
+        var i, iDir, dirs, nDirs;
+        if(caps.indexOf('ALL') > -1) {
+            dirNum = 128 | 1 | 2 | 4 | 8 | 16 | 32 | 64;
+        } else {
+              dirs = caps.split('+');
+              nDirs = dirs.length;
+              dirNum = 0;
+              for(i = 0; i < nDirs; i += 1) {
+                iDir = dirs[i];
+                if(iDir === 'E') {
+                  dirNum |= 128;
+                } else if(iDir === 'NE' || iDir === 'EN') {
+                  dirNum |= 1;
+                } else if(iDir === 'N') {
+                  dirNum |= 2;
+                } else if(iDir === 'NW' || iDir === 'WN') {
+                  dirNum |= 4;
+                } else if(iDir === 'W') {
+                  dirNum |= 8;
+                } else if(iDir === 'SW' || iDir === 'WS') {
+                  dirNum |= 16;
+                } else if(iDir === 'S') {
+                  dirNum |= 32;
+                } else if(iDir === 'SE' || iDir === 'ES') {
+                  dirNum |= 64;
+                }
+              }
+        }
+        DIRECTIONS = dirNum;
+      }
+  }
 
   // This starts the game once the word list is loaded
-  function onWordListLoad(data) {
-    // Clean and store the word list
-    WORD_LIST = data.replace(/["<>(){}\[\]#@&]/g, '').replace(/,/g, ' ').replace(/%20/g, ' ').replace(/\+/g, ' ').split(/ +/g);
+  function puzzleInit(words, options) {
+    WORD_LIST = words
+
+    if (typeof options !== "undefined")
+        parseOptions(options);
 
     if( ORDER === 'shuffle' ){
       RANDOM.shuffle(WORD_LIST);
@@ -1075,151 +1181,17 @@
     });
   }
 
-  var options = getUrlParmString();
-  if( options === '' ){
-    if(DATA.loadValid('use-custom-url', 0, DATA.int10) === 1) {
-      options = DATA.load('url-parm-string', options);
-    }
-  }
-  var gUrlParms = parseUrlParmString(options);
-
-  // URL PARAMETERS:
-  // WORDS: a comma seperated list of words
-  // WIDTH: the width of the puzzle in number of characters
-  // HEIGHT: the height of the puzzle in number of characters
-  // MAX: the maximum number of words to show
-  // SEED: an integer that will seed the random number generation
-  // MODE: the method that the game should be run in
-  //      game - does not show answers when a word from the list is clicked
-  //      help - shows the answer when a word from the list is clicked
-  // DIRS: a comma speerated list of allowed word directions
-  //   By default all directions are allowed, for 'regular' left to right
-  //   reading just enable 'E' east, 'W' west is 'backwards', 
-  //   ALL, N, S, E, W, NE, NW, SE, SW
-  // LIST: a special word list to load
-
-  var WORD_LIST = null;
-  var WORD_INDEX = 0;
-  var WIDTH = 8;
-  var HEIGHT = 8;
-  var MAX = WIDTH * HEIGHT;
-  var SEED = RANDOM.getSeed();
-  var MODE = 'question';
-  var DIRECTIONS = 128 | 1 | 2 | 4 | 8 | 16 | 32 | 64;
-  var ORDER = 'random';
 
   // Have to wait until 'onload' for excanvas (ie<9 compatibility)
   $(document).ready(function () {
 
-    // Try to load URL parameters.
-    if(gUrlParms !== null) {
-      if(gUrlParms.index){
-        WORD_INDEX = Math.abs(parseInt(gUrlParms.index, 10));
-      }
-      if(gUrlParms.width) {
-        WIDTH = parseInt(gUrlParms.width, 10);
-        if(WIDTH < 5) {
-          WIDTH = 5;
-        }
-        N_LETTERS_X = WIDTH;
-      }
-      if(gUrlParms.height) {
-        HEIGHT = parseInt(gUrlParms.height, 10);
-        if(HEIGHT < 5) {
-          HEIGHT = 5;
-        }
-        N_LETTERS_Y = HEIGHT;
-      }
-      if(gUrlParms.max) {
-        MAX = parseInt(gUrlParms.max, 10);
-      } else {
-        MAX = WIDTH * HEIGHT;
-      }
-      if(gUrlParms.seed) {
-        SEED = parseInt(gUrlParms.seed, 10);
-        RANDOM.setSeed(SEED);
-      }
-      if (gUrlParms.order) {
-        ORDER = gUrlParms.order;
-      }
-      if(gUrlParms.mode) {
-        var mode = gUrlParms.mode.toLowerCase();
-        if(mode === 'questions' || mode === 'question' || mode === 'game' || mode === 'search' || mode === 'find' || mode === 'puzzle') {
-          MODE = 'find';
-        }
-        if(mode === 'answer' || mode === 'answers' || mode === 'solution' || mode === 'solutions' || mode === 'found' || mode === 'done' || mode === 'help' || mode === 'hint') {
-          MODE = 'help';
-        }
-      }
-      if(gUrlParms.dirs) {
-        var caps = gUrlParms.dirs.toUpperCase();
-        var dirNum = 0;
-        var i, iDir, dirs, nDirs;
-        if(caps.indexOf('ALL') > -1) {
-          dirNum = 128 | 1 | 2 | 4 | 8 | 16 | 32 | 64;
-        } else {
-          dirs = caps.split('+');
-          nDirs = dirs.length;
-          dirNum = 0;
-          for(i = 0; i < nDirs; i += 1) {
-            iDir = dirs[i];
-            if(iDir === 'E') {
-              dirNum |= 128;
-            } else if(iDir === 'NE' || iDir === 'EN') {
-              dirNum |= 1;
-            } else if(iDir === 'N') {
-              dirNum |= 2;
-            } else if(iDir === 'NW' || iDir === 'WN') {
-              dirNum |= 4;
-            } else if(iDir === 'W') {
-              dirNum |= 8;
-            } else if(iDir === 'SW' || iDir === 'WS') {
-              dirNum |= 16;
-            } else if(iDir === 'S') {
-              dirNum |= 32;
-            } else if(iDir === 'SE' || iDir === 'ES') {
-              dirNum |= 64;
-            }
-          }
-        }
-        DIRECTIONS = dirNum;
-      }
+    options = {
+        dirs: 'E+S+NE+SE',
+        width: 10,
+        height: 10
     }
-
-    // Only use the supplied words if the word list is set to custom
-    var isLoadWords = gUrlParms && gUrlParms.words;
-    var isLoadList = gUrlParms && gUrlParms.list && gUrlParms.list !== 'custom';
-    if( isLoadWords && ! isLoadList ) {
-      // Manually start with the words provided
-      onWordListLoad(gUrlParms.words);
-    } else {
-      var list = 'quick';
-      if(gUrlParms && gUrlParms.list) {
-        if(gUrlParms.list === "english") {
-          list = "english";
-        }
-        if(gUrlParms.list === "crossword") {
-          list = "crossword";
-        }
-        if(gUrlParms.list === "names_male") {
-          list = "names_male";
-        }
-        if(gUrlParms.list === "names_female") {
-          list = "names_female";
-        }
-        if(gUrlParms.list === "misspell") {
-          list = "misspell";
-        }
-        if(gUrlParms.list === "places") {
-          list = "places";
-        }
-        if(gUrlParms.list === "constitution") {
-          list = "constitution";
-        }
-      }
-      // Load the list of words via get request (AJAX)
-      $.get('../resources/word-lists/' + list, onWordListLoad);
-    }
+    puzzleInit(['rush', 'cynic', 'trivium', 'meshuggah', 'tesseract', 'scalethesummit'], options)
 
   }); // document.is.ready!
+
 })();
